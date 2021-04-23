@@ -134,6 +134,7 @@ class ScyllaDbSessionImpl implements ScyllaDbSession {
   }
 
   private PreparedStatement createInsertPreparedStatement(String tableName, TopicConfigs topicConfigs) {
+    log.trace("TRACE 15");
     Insert statement = QueryBuilder.insertInto(config.keyspace, tableName);
     TableMetadata.Table tableMetadata = tableMetadata(tableName);
     for (TableMetadata.Column columnMetadata : tableMetadata.columns()) {
@@ -141,9 +142,19 @@ class ScyllaDbSessionImpl implements ScyllaDbSession {
     }
     log.debug("insert() - Preparing statement. '{}'", statement);
     if (topicConfigs != null) {
+      log.trace("TRACE 16");
+      if (topicConfigs.getTtl() != null) {
+        log.trace("TRACE 16: topicConfigs.getTtl() = {}", topicConfigs.getTtl());
+      }
+
       return (topicConfigs.getTtl() == null) ? session.prepare(statement) :
               session.prepare(statement.using(QueryBuilder.ttl(topicConfigs.getTtl())));
     } else {
+      log.trace("TRACE 17");
+      if (config.ttl != null) {
+        log.trace("TRACE 17: config.ttl = {}", config.ttl);
+      }
+
       return (config.ttl == null) ? session.prepare(statement) :
               session.prepare(statement.using(QueryBuilder.ttl(config.ttl)));
     }
@@ -152,14 +163,24 @@ class ScyllaDbSessionImpl implements ScyllaDbSession {
   @Override
   public RecordToBoundStatementConverter insert(String tableName, TopicConfigs topicConfigs) {
     if (topicConfigs != null && topicConfigs.getTtl() != null) {
+      log.trace("TRACE 11: topicConfigs.getTtl() = {}", topicConfigs.getTtl());
+
       PreparedStatement preparedStatement = createInsertPreparedStatement(tableName, topicConfigs);
       return new RecordToBoundStatementConverter(preparedStatement);
     } else {
+      if (topicConfigs == null) {
+        log.trace("TRACE 11: topicConfigs == null");
+      }
+      else {
+        log.trace("TRACE 11: topicConfigs.getTtl() == null");
+      }
+
       return this.insertStatementCache.computeIfAbsent(
               tableName,
               new Function<String, RecordToBoundStatementConverter>() {
                 @Override
                 public RecordToBoundStatementConverter apply(String tableName) {
+                  log.trace("TRACE 11: computeIfAbsent");
                   PreparedStatement preparedStatement = createInsertPreparedStatement(tableName, topicConfigs);
                   return new RecordToBoundStatementConverter(preparedStatement);
                 }

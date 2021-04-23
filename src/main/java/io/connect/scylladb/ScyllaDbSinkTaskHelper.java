@@ -49,12 +49,15 @@ public class ScyllaDbSinkTaskHelper {
   }
 
   public BoundStatement getBoundStatementForRecord(SinkRecord record) {
+    log.trace("TRACE 31: 1");
     final String tableName = record.topic();
     BoundStatement boundStatement = null;
     TopicConfigs topicConfigs = null;
     if (scyllaDbSinkConnectorConfig.topicWiseConfigs.containsKey(tableName)) {
+      log.trace("TRACE 31: 2");
       topicConfigs = scyllaDbSinkConnectorConfig.topicWiseConfigs.get(tableName);
       if (topicConfigs.getMappingStringForTopic() != null && !topicConfigs.isScyllaColumnsMapped()) {
+        log.trace("TRACE 31: 3");
         topicConfigs.setTablePartitionAndColumnValues(record);
       }
       topicConfigs.setTtlAndTimeStampIfAvailable(record);
@@ -82,9 +85,13 @@ public class ScyllaDbSinkTaskHelper {
                         record.key()));
       }
     } else {
+      log.trace("TRACE 31: 4");
       this.session.createOrAlterTable(tableName, record, topicConfigs);
+      log.trace("TRACE 31: 5");
       final RecordToBoundStatementConverter boundStatementConverter = this.session.insert(tableName, topicConfigs);
+      log.trace("TRACE 31: 6");
       final RecordToBoundStatementConverter.State state = boundStatementConverter.convert(record, topicConfigs, ScyllaDbConstants.INSERT_OPERATION);
+      log.trace("TRACE 31: 7");
       boundStatement = state.statement;
     }
 

@@ -312,10 +312,14 @@ class ScyllaDbSchemaBuilder extends SchemaChangeListenerBase {
       for (Map.Entry<String, TopicConfigs.KafkaScyllaColumnMapper> entry: topicConfigs.getTablePartitionKeyMap().entrySet()) {
         final DataType dataType = dataType(entry.getValue().getKafkaRecordField().schema());
         create.addPartitionKey(entry.getValue().getScyllaColumnName(), dataType);
+
+        log.trace("TRACE 51: {}, {}", entry.getValue().getScyllaColumnName(), dataType);
       }
       for (Map.Entry<String, TopicConfigs.KafkaScyllaColumnMapper> entry: topicConfigs.getTableColumnMap().entrySet()) {
         final DataType dataType = dataType(entry.getValue().getKafkaRecordField().schema());
         create.addColumn(entry.getValue().getScyllaColumnName(), dataType);
+
+        log.trace("TRACE 52: {}, {}", entry.getValue().getScyllaColumnName(), dataType);
       }
     } else {
       Set<String> fields = new HashSet<>();
@@ -323,6 +327,8 @@ class ScyllaDbSchemaBuilder extends SchemaChangeListenerBase {
         final DataType dataType = dataType(keyField.schema());
         create.addPartitionKey(keyField.name(), dataType);
         fields.add(keyField.name());
+
+        log.trace("TRACE 53: {}, {}", keyField.name(), dataType);
       }
 
       for (final Field valueField : valueSchema.fields()) {
@@ -333,10 +339,14 @@ class ScyllaDbSchemaBuilder extends SchemaChangeListenerBase {
 
         final DataType dataType = dataType(valueField.schema());
         create.addColumn(valueField.name(), dataType);
+
+        log.trace("TRACE 54: {}, {}", valueField.name(), dataType);
       }
     }
 
     if (this.config.tableManageEnabled) {
+      log.trace("TRACE 55");
+
       tableOptions.compressionOptions(config.tableCompressionAlgorithm).buildInternal();
       log.info("create() - Adding table {}.{}\n{}", this.config.keyspace, tableName, tableOptions);
       session.executeStatement(tableOptions);

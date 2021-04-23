@@ -23,11 +23,15 @@ import io.confluent.kafka.connect.utils.config.ValidEnum;
 import io.confluent.kafka.connect.utils.config.ValidPort;
 import io.connect.scylladb.topictotable.TopicConfigs;
 import io.netty.handler.ssl.SslProvider;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Configuration class for {@link ScyllaDbSinkConnector}.
  */
 public class ScyllaDbSinkConnectorConfig extends AbstractConfig {
+
+  private static final Logger log = LoggerFactory.getLogger(ScyllaDbSinkConnectorConfig.class);
 
   public final int port;
   public final String contactPoints;
@@ -145,9 +149,15 @@ public class ScyllaDbSinkConnectorConfig extends AbstractConfig {
     this.timestampResolutionMs = getLong(TIMESTAMP_RESOLUTION_MS_CONF);
     this.behaviourOnError = BehaviorOnError.valueOf(getString(BEHAVIOR_ON_ERROR_CONFIG).toUpperCase());
 
+    log.trace("TRACE 41");
+
     Map<String, Map<String, String>> topicWiseConfigsMap = new HashMap<>();
     for (final Map.Entry<String, String> entry : ((Map<String, String>) originals).entrySet()) {
       final String name2 = entry.getKey();
+
+      log.trace("TRACE 42: entry.getKey() = {}", entry.getKey());
+      log.trace("TRACE 42: entry.getValue() = {}", entry.getValue());
+
       if (name2.startsWith("topic.")) {
         final String topicName = this.tryMatchTopicName(name2);
         final Map<String, String> topicMap = topicWiseConfigsMap.computeIfAbsent(topicName, t -> new HashMap());
@@ -156,6 +166,9 @@ public class ScyllaDbSinkConnectorConfig extends AbstractConfig {
     }
     topicWiseConfigs = new HashMap<>();
     for (Map.Entry<String, Map<String, String>> topicWiseConfig : topicWiseConfigsMap.entrySet()) {
+      log.trace("TRACE 43: topicWiseConfig.getKey() = {}", topicWiseConfig.getKey());
+      log.trace("TRACE 43: topicWiseConfig.getValue() = {}", topicWiseConfig.getValue());
+
       TopicConfigs topicConfigs = new TopicConfigs(topicWiseConfig.getValue(), this);
       topicWiseConfigs.put(topicWiseConfig.getKey(), topicConfigs);
     }
@@ -588,7 +601,7 @@ public class ScyllaDbSinkConnectorConfig extends AbstractConfig {
                     "Execute statement timeout (in ms)")
             .define(
                     TTL_CONFIG,
-                    ConfigDef.Type.STRING,
+                    ConfigDef.Type.INT,
                     TTL_DEFAULT,
                     ConfigDef.Importance.MEDIUM,
                     TTL_DOC,

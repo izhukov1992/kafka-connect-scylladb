@@ -80,17 +80,25 @@ public class TopicConfigs {
               ? columnNameMap[1].split("\\.")[1] : "";
       String scyllaColumnName = columnNameMap[0].trim();
       KafkaScyllaColumnMapper kafkaScyllaColumnMapper = new KafkaScyllaColumnMapper(scyllaColumnName);
+
+      log.trace("TRACE 1: columnNameMap[1] = {}, scyllaColumnName = {}", columnNameMap[1], scyllaColumnName);
+
       if (columnNameMap[1].startsWith("key.")) {
         if (record.keySchema() != null) {
+          log.trace("TRACE 1: record.keySchema() != null");
+
           kafkaScyllaColumnMapper.kafkaRecordField = getFiledForNameFromSchema(record.keySchema(), recordField, "record.keySchema()");
         }
         this.tablePartitionKeyMap.put(recordField, kafkaScyllaColumnMapper);
+
+        log.trace("TRACE 1: this.tablePartitionKeyMap.put");
       } else if (columnNameMap[1].startsWith("value.")) {
         Field valueField = null;
         if (record.valueSchema() != null) {
           valueField = getFiledForNameFromSchema(record.valueSchema(), recordField, "record.valueSchema()");
         }
         if (scyllaColumnName.equals("__ttl")) {
+          log.trace("TRACE 1: scyllaColumnName.equals(__ttl)");
           ttlMappedField = recordField;
         } else if (scyllaColumnName.equals("__timestamp")) {
           timeStampMappedField = recordField;
@@ -143,6 +151,7 @@ public class TopicConfigs {
     // Timestamps in Kafka (record.timestamp()) are in millisecond precision,
     // while Scylla expects a microsecond precision: 1 ms = 1000 us.
     this.timeStamp = record.timestamp() * 1000;
+    log.trace("TRACE 2: setTtlAndTimeStampIfAvailable");
     if (timeStampMappedField != null) {
       Object timeStampValue = getValueOfField(record.value(), timeStampMappedField);
       if (timeStampValue instanceof Long) {
@@ -155,9 +164,22 @@ public class TopicConfigs {
       }
     }
     if (ttlMappedField != null) {
+      log.trace("TRACE 3: ttlMappedField != null");
       Object ttlValue = getValueOfField(record.value(), ttlMappedField);
+
+      if (record.value() != null) {
+        log.trace("TRACE 4: record.value = {}", record.value());
+      }
+      if (ttlValue != null) {
+        log.trace("TRACE 4: ttlValue = {}", ttlValue);
+      }
+
       if (ttlValue instanceof  Integer) {
         this.ttl = (Integer) ttlValue;
+
+        if (this.ttl != null) {
+          log.trace("TRACE 5: this.ttl = {}", this.ttl);
+        }
       } else {
         throw new DataException(
                 String.format("TTL should be of type Integer. But record provided for %s is of type %s",
@@ -196,6 +218,10 @@ public class TopicConfigs {
   }
 
   public Integer getTtl() {
+    if (ttl != null) {
+      log.trace("TRACE 6: ttl = {}", ttl);
+    }
+
     return ttl;
   }
 
